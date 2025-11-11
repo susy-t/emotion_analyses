@@ -1,0 +1,11 @@
+transformers>=4.31.0
+datasets
+torch
+torchaudio
+librosa
+soundfile
+scikit-learn
+pandas
+numpy
+tqdm
+matplotlib
