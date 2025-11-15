@@ -8,121 +8,161 @@ from model import ChineseEmotionClassifier
 
 
 class ChineseEmotionTrainer:
-    def __init__(self, feature_method='combined', model_type='random_forest'):
+    def __init__(self, feature_method='combined', model_type='random_forest', use_negation=True):
         self.preprocessor = ChinesePreprocessor()
-        self.feature_extractor = ChineseFeatureExtractor(method=feature_method)
+        self.feature_extractor = ChineseFeatureExtractor(
+            method=feature_method,
+            use_negation=use_negation
+        )
         self.classifier = ChineseEmotionClassifier(model_type=model_type)
+        self.use_negation = use_negation
 
     def load_sample_data(self):
         """
-        加载更丰富的中文示例数据
+        加载更丰富的中文示例数据（使用前面代码的数据集）
         """
-        # 增强版中文示例数据 - 每个情感类别都有更多样本
+        # 定义每个情感的文本（使用您原来的丰富数据集）
+        anger_texts = [
+            "他气得一拳砸在桌子上，震得茶杯嗡嗡作响。",
+            "她双眉倒竖，眼中几乎要喷出火来。",
+            "你凭什么这样对我！他怒吼道。",
+            "他紧握的双拳青筋暴起，浑身都在发抖。",
+            "我受够了你的谎言！她咬牙切齿地说。",
+            "他愤怒地撕碎了合同，纸屑漫天飞舞。",
+            "你们这是在欺负人！他涨红着脸喊道。",
+            "她气得浑身发抖，话都说不连贯。",
+            "他怒目圆睁，像一头被激怒的狮子。",
+            "这简直是在侮辱我的智商！他愤然离席。",
+        ]
+
+        fear_texts = [
+            "她惊恐地睁大眼睛，一步步往后退。",
+            "黑暗中传来奇怪的声响，他吓得屏住了呼吸。",
+            "我...我好害怕...她颤抖着说。",
+            "他浑身冷汗直冒，心跳快得要蹦出胸口。",
+            "别过来！她尖叫着缩到墙角。",
+            "他两腿发软，几乎要跪倒在地。",
+            "那是什么声音？她紧张地抓住同伴的胳膊。",
+            "他吓得魂飞魄散，头也不回地狂奔。",
+            "求求你别伤害我...她带着哭腔哀求。",
+            "他躲在衣柜里，大气都不敢出。",
+        ]
+
+        sadness_texts = [
+            "她独自坐在窗前，泪水无声滑落。",
+            "他抱着相框，久久不语。",
+            "为什么偏偏是我...她哽咽着说。",
+            "他望着远方，眼中盛满哀愁。",
+            "雨滴敲打着窗户，就像她破碎的心。",
+            "他轻轻抚摸着那张泛黄的照片。",
+            "一切都结束了...她低声啜泣。",
+            "他把自己关在房间里，一整天都不出门。",
+            "她红着眼眶，强忍着不让眼泪掉下来。",
+            "那首老歌让他想起了逝去的亲人。",
+        ]
+
+        joy_texts = [
+            "她哼着歌，脚步轻快地走在路上。",
+            "太棒了！他兴奋地跳了起来。",
+            "阳光真好，她眯着眼享受这美好时刻。",
+            "他忍不住嘴角上扬，心里甜滋滋的。",
+            "今天真是个好日子！她开心地说。",
+            "他收到礼物时，脸上绽放出灿烂的笑容。",
+            "她和小狗在草地上嬉戏，笑声不断。",
+            "这次成功让他感到前所未有的满足。",
+            "他惬意地靠在躺椅上，享受着午后时光。",
+            "她看到老朋友时，惊喜地叫出声来。",
+        ]
+
+        disgust_texts = [
+            "他闻到那股味道，立即捂住了鼻子。",
+            "看着蠕动的蛆虫，她感到一阵反胃。",
+            "这食物都发霉了！他嫌弃地推开盘子。",
+            "她看到蟑螂爬过，恶心得浑身起鸡皮疙瘩。",
+            "别让我再看到这种东西！他厌恶地转过头。",
+            "那股酸臭味让她差点吐出来。",
+            "他小心翼翼地用纸巾捏起那只死老鼠。",
+            "太恶心了！她看着污秽的厕所直皱眉。",
+            "他喝到变质的牛奶，连忙吐了出来。",
+            "她不敢碰那件沾满污渍的衣服。",
+        ]
+
+        surprise_texts = [
+            "打开门的那一刻，她惊喜地叫出声来。",
+            "这是给我的吗？他不敢相信自己的眼睛。",
+            "你们怎么都来了！她感动得热泪盈眶。",
+            "他拆开礼物，脸上写满了惊喜。",
+            "这个结果完全出乎她的意料！",
+            "他以为自己看错了，揉了揉眼睛。",
+            "生日快乐！众人齐声喊道，她愣住了。",
+            "他没想到会在这里遇见老朋友。",
+            "这份礼物太贴心了！她激动地说。",
+            "他收到录取通知时，欣喜若狂。",
+        ]
+
+        # 合并所有文本
+        all_texts = anger_texts + fear_texts + sadness_texts + joy_texts + disgust_texts + surprise_texts
+
+        # 创建标签数组
+        anger_labels = [1] * len(anger_texts) + [0] * (len(all_texts) - len(anger_texts))
+        fear_labels = [0] * len(anger_texts) + [1] * len(fear_texts) + [0] * (len(all_texts) - len(anger_texts) - len(fear_texts))
+        sadness_labels = [0] * (len(anger_texts) + len(fear_texts)) + [1] * len(sadness_texts) + [0] * (len(all_texts) - len(anger_texts) - len(fear_texts) - len(sadness_texts))
+        joy_labels = [0] * (len(anger_texts) + len(fear_texts) + len(sadness_texts)) + [1] * len(joy_texts) + [0] * (len(all_texts) - len(anger_texts) - len(fear_texts) - len(sadness_texts) - len(joy_texts))
+        disgust_labels = [0] * (len(anger_texts) + len(fear_texts) + len(sadness_texts) + len(joy_texts)) + [1] * len(disgust_texts) + [0] * (len(all_texts) - len(anger_texts) - len(fear_texts) - len(sadness_texts) - len(joy_texts) - len(disgust_texts))
+        surprise_labels = [0] * (len(anger_texts) + len(fear_texts) + len(sadness_texts) + len(joy_texts) + len(disgust_texts)) + [1] * len(surprise_texts)
+
+        # 验证数据长度
+        print(f"总文本数量: {len(all_texts)}")
+        print(f"愤怒标签数量: {len(anger_labels)}")
+        print(f"恐惧标签数量: {len(fear_labels)}")
+        print(f"悲伤标签数量: {len(sadness_labels)}")
+        print(f"愉悦标签数量: {len(joy_labels)}")
+        print(f"恶心标签数量: {len(disgust_labels)}")
+        print(f"惊喜标签数量: {len(surprise_labels)}")
+
+        # 创建数据字典
         data = {
-            'text': [
-                # 愤怒类 - 12个样本
-                "我对此情况感到非常愤怒！简直气死我了！",
-                "我恨透了这个事情，怒火中烧",
-                "气得我直跺脚，简直无法忍受",
-                "这让我火冒三丈，太生气了",
-                "真是让人气愤不已",
-                "我对此极为不满，愤怒至极",
-                "这简直是在挑战我的底线",
-                "气得我浑身发抖",
-                "这种不公平让我愤怒",
-                "我怒火冲天，无法平静",
-                "这行为让我义愤填膺",
-                "气得我咬牙切齿",
-
-                # 恐惧类 - 12个样本
-                "这太可怕了，我真的被吓到了，心里很恐惧",
-                "这让我从心底感到害怕，恐惧万分",
-                "吓得我浑身发抖，太恐怖了",
-                "这个恐怖片让我毛骨悚然",
-                "我感到极度恐惧，不敢独自在家",
-                "这种危险的情况让我害怕",
-                "听到那个消息我胆战心惊",
-                "吓得我魂飞魄散",
-                "这个鬼故事太吓人了",
-                "黑暗中我感到非常恐惧",
-                "这种未知让我感到害怕",
-                "惊悚的场景让我恐惧不已",
-
-                # 悲伤类 - 12个样本
-                "今天我感到非常伤心和沮丧，心情低落",
-                "我的心都碎了，一直在哭泣",
-                "悲伤的情绪笼罩着我，很难过",
-                "听到这个消息我悲痛欲绝",
-                "我感到十分难过，眼泪止不住",
-                "这种失落感让我很伤心",
-                "离别总是让人伤感",
-                "看到这种情景我很难过",
-                "失去的痛苦让我悲伤",
-                "忧郁的情绪挥之不去",
-                "这件事让我心如刀割",
-                "悲伤让我无法振作",
-
-                # 愉悦类 - 12个样本
-                "多么美好和愉快的经历啊！太开心了！",
-                "我太高兴了，兴奋不已！",
-                "喜悦的心情难以言表，太棒了",
-                "今天真是快乐的一天",
-                "我感到无比幸福和满足",
-                "这个好消息让我欣喜若狂",
-                "心情特别好，充满喜悦",
-                "开心的不得了",
-                "这让我心情愉悦，笑容满面",
-                "快乐的时光总是短暂",
-                "内心充满欢喜和满足",
-                "幸福的感觉真美好",
-
-                # 恶心类 - 12个样本
-                "这真令人作呕，太恶心了",
-                "这让我恶心想吐，太反感了",
-                "看到这个就觉得恶心，真受不了",
-                "这种行为令人作呕",
-                "这种味道让我反胃",
-                "看到这种场面我觉得很恶心",
-                "这种卑劣的行为真让人反感",
-                "恶心的我吃不下饭",
-                "这种肮脏的东西真恶心",
-                "令人厌恶到极点",
-                "看到就让我反胃",
-                "这种气味真让人作呕",
-
-                # 惊喜类 - 12个样本
-                "哇，这真是个惊喜！完全出乎意料！",
-                "真不敢相信，太让人震惊了！",
-                "意外的惊喜让我措手不及",
-                "这完全出乎我的意料",
-                "真是个意外的惊喜",
-                "没想到会这样，太惊喜了",
-                "这结果让我大吃一惊",
-                "突如其来的好消息",
-                "这意外的发现让我惊喜",
-                "完全没想到会是这样的结果",
-                "惊喜来得太突然了",
-                "这真是个美妙的意外"
-            ],
-            # 对应的情感标签 - 每个情感12个1，其余为0
-            '愤怒': [1] * 12 + [0] * 60,
-            '恐惧': [0] * 12 + [1] * 12 + [0] * 48,
-            '悲伤': [0] * 24 + [1] * 12 + [0] * 36,
-            '愉悦': [0] * 36 + [1] * 12 + [0] * 24,
-            '恶心': [0] * 48 + [1] * 12 + [0] * 12,
-            '惊喜': [0] * 60 + [1] * 12
+            'text': all_texts,
+            '愤怒': anger_labels,
+            '恐惧': fear_labels,
+            '悲伤': sadness_labels,
+            '愉悦': joy_labels,
+            '恶心': disgust_labels,
+            '惊喜': surprise_labels
         }
+
         return pd.DataFrame(data)
 
     def prepare_data(self, df):
         """准备训练数据"""
         print("正在预处理文本数据...")
-        # 预处理文本
-        df['processed_text'] = df['text'].apply(self.preprocessor.preprocess)
+
+        # 根据use_negation参数决定预处理方式
+        if self.use_negation:
+            df['processed_text'] = df['text'].apply(
+                lambda x: self.preprocessor.preprocess(x, use_negation=True)
+            )
+        else:
+            df['processed_text'] = df['text'].apply(self.preprocessor.preprocess)
 
         print("正在提取特征...")
-        # 提取特征
-        X = self.feature_extractor.extract_features(df['processed_text'].tolist())
+
+        # 根据use_negation参数决定特征提取方式
+        try:
+            if self.use_negation:
+                X = self.feature_extractor.extract_features(
+                    df['text'].tolist(),
+                    df['processed_text'].tolist()
+                )
+            else:
+                X = self.feature_extractor.extract_features(df['processed_text'].tolist())
+        except Exception as e:
+            print(f"特征提取失败: {e}")
+            # 使用备用方法
+            if self.use_negation:
+                X = self.feature_extractor.extract_features_normal(df['text'].tolist())
+            else:
+                X = self.feature_extractor.extract_features_normal(df['processed_text'].tolist())
 
         # 准备标签
         emotion_columns = ['愤怒', '恐惧', '悲伤', '愉悦', '恶心', '惊喜']
@@ -152,10 +192,10 @@ class ChineseEmotionTrainer:
         print("评估模型性能...")
         accuracy = self.classifier.evaluate(X_test, y_test)
 
-        # 如果准确率太低，尝试使用更复杂的模型
-        if accuracy < 0.7:
-            print("模型性能不佳，尝试使用SVM模型...")
-            self.classifier = ChineseEmotionClassifier(model_type='svm')
+        # 如果准确率太低，尝试使用更简单的模型
+        if accuracy < 0.5:
+            print("模型性能不佳，尝试使用逻辑回归模型...")
+            self.classifier = ChineseEmotionClassifier(model_type='logistic_regression')
             self.classifier.fit(X_train, y_train)
             accuracy = self.classifier.evaluate(X_test, y_test)
 
@@ -178,6 +218,10 @@ class ChineseEmotionTrainer:
 if __name__ == "__main__":
     # 训练模型示例
     print("开始训练中文情感分析模型...")
-    trainer = ChineseEmotionTrainer(feature_method='combined', model_type='random_forest')
+    trainer = ChineseEmotionTrainer(
+        feature_method='combined',
+        model_type='random_forest',
+        use_negation=True
+    )
     trainer.train()
     print("训练完成!")

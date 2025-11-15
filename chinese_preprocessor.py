@@ -8,8 +8,85 @@ import os
 class ChinesePreprocessor:
     def __init__(self, stopwords_dir='stopwords'):
         self.stopwords = self._load_stopwords(stopwords_dir)
+        # 初始化情感白名单
+        self.emotion_whitelist = self._create_emotion_whitelist()
+
         # 初始化jieba分词器
+        # 添加否定词列表
+        self.negation_words = {
+            '不', '没', '无', '非', '未', '勿', '莫', '没有', '别', '未',
+            '不要', '不用', '不必', '未能', '无法', '不会', '不可', '不能',
+            '绝不', '从不', '毫无', '毫无', '毫无', '毫无意义'
+        }
+
         jieba.initialize()
+
+    def segment_text_with_negation(self, text, use_pos=False):
+        """分词并标记否定词"""
+        if use_pos:
+            words = pseg.cut(text)
+            allowed_pos = {'n', 'v', 'a', 'd', 'ad', 'i', 'l'}
+            words = [(word, pos) for word, pos in words if pos[0] in allowed_pos]
+        else:
+            words = [(word, 'x') for word in jieba.cut(text)]  # 'x'表示未知词性
+
+        # 过滤停用词，但保留否定词和情感词
+        filtered_words = []
+        for word, pos in words:
+            # 保留否定词
+            if word in self.negation_words:
+                filtered_words.append(('NOT', 'negation'))  # 标记为否定
+            # 保留情感白名单中的词
+            elif word in self.emotion_whitelist:
+                filtered_words.append((word, pos))
+            # 其他词：不在停用词列表中且长度大于0
+            elif word not in self.stopwords and len(word.strip()) > 0:
+                filtered_words.append((word, pos))
+
+        return filtered_words
+
+    def _create_emotion_whitelist(self):
+        """创建情感词白名单"""
+        whitelist = set()
+
+        # 愤怒相关
+        anger_words = ['怒', '愤', '气', '恼', '恨', '火', '暴躁', '生气', '愤怒', '气愤', '怒火']
+        # 恐惧相关
+        fear_words = ['惧', '怕', '畏', '吓', '惊', '恐', '害怕', '恐怖', '恐惧', '惊吓']
+        # 悲伤相关
+        sadness_words = ['悲', '伤', '哀', '愁', '怨', '哭', '泪', '伤心', '悲伤', '难过']
+        # 愉悦相关
+        joy_words = ['喜', '乐', '欢', '笑', '欣', '悦', '开心', '高兴', '快乐', '喜欢']
+        # 恶心相关
+        disgust_words = ['恶', '厌', '吐', '呕', '嫌', '憎', '讨厌', '厌恶', '反感', '恶心']
+        # 惊喜相关
+        surprise_words = ['惊', '讶', '奇', '异', '诧', '愕', '惊喜', '惊讶', '惊奇']
+
+        # 合并所有情感词
+        all_emotion_words = anger_words + fear_words + sadness_words + joy_words + disgust_words + surprise_words
+        whitelist.update(all_emotion_words)
+
+        return whitelist
+
+    def preprocess_with_negation(self, text, use_pos=False):
+        """带否定词处理的预处理"""
+        cleaned_text = self.clean_text(text)
+        words_with_negation = self.segment_text_with_negation(cleaned_text, use_pos)
+
+        # 如果过滤后为空，返回原始文本的前几个字符
+        if not words_with_negation:
+            fallback = cleaned_text[:3] if len(cleaned_text) >= 3 else cleaned_text
+            return fallback if fallback else text
+
+        # 将处理后的词连接成字符串，否定词标记为NOT
+        processed_tokens = []
+        for word, pos in words_with_negation:
+            if word == 'NOT':
+                processed_tokens.append('NOT')
+            else:
+                processed_tokens.append(word)
+
+        return ' '.join(processed_tokens)
 
     def _load_stopwords(self, stopwords_dir):
         """加载中文停用词表"""
@@ -53,6 +130,9 @@ class ChinesePreprocessor:
 
     def clean_text(self, text):
         """清理中文文本"""
+        if not isinstance(text, str):
+            return ""
+
         # 移除URL
         text = re.sub(r'http\S+', '', text)
         # 移除HTML标签
@@ -70,24 +150,48 @@ class ChinesePreprocessor:
 
     def segment_text(self, text, use_pos=False):
         """中文分词"""
+        if not isinstance(text, str) or not text.strip():
+            return []
+
         if use_pos:
-            # 使用词性标注的分词
             words = pseg.cut(text)
-            # 只保留名词、动词、形容词、副词等实词
-            allowed_pos = {'n', 'v', 'a', 'd', 'ad'}  # 名词、动词、形容词、副词
+            allowed_pos = {'n', 'v', 'a', 'd', 'ad', 'i', 'l'}
             words = [word for word, pos in words if pos[0] in allowed_pos]
         else:
-            # 普通分词
             words = jieba.cut(text)
 
-        # 移除停用词和单字词
-        words = [word for word in words if word not in self.stopwords and len(word) > 1]
-        return list(words)
+        # 不过滤情感白名单中的词，其他词按正常规则过滤
+        filtered_words = []
+        for word in words:
+            if word in self.emotion_whitelist:
+                filtered_words.append(word)
+            elif word not in self.stopwords and len(word.strip()) > 0:
+                filtered_words.append(word)
 
-    def preprocess(self, text, use_pos=False):
-        """完整的预处理流程"""
+        return filtered_words
+
+    def preprocess(self, text, use_pos=False, use_negation=True):
+        """
+        统一的预处理流程
+        Args:
+            text: 输入文本
+            use_pos: 是否使用词性标注
+            use_negation: 是否使用否定词处理（默认开启）
+        """
+        if not isinstance(text, str):
+            return ""
+
+        if use_negation:
+            return self.preprocess_with_negation(text, use_pos)
+
+        # 原有的预处理逻辑
         cleaned_text = self.clean_text(text)
         words = self.segment_text(cleaned_text, use_pos)
+
+        if not words:
+            fallback = cleaned_text[:3] if len(cleaned_text) >= 3 else cleaned_text
+            return fallback if fallback else text
+
         return ' '.join(words)
 
     def add_stopwords(self, words):
