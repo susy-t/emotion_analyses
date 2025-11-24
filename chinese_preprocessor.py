@@ -16,13 +16,15 @@ class ChinesePreprocessor:
         self.negation_words = {
             '不', '没', '无', '非', '未', '勿', '莫', '没有', '别', '未',
             '不要', '不用', '不必', '未能', '无法', '不会', '不可', '不能',
-            '绝不', '从不', '毫无', '毫无', '毫无', '毫无意义'
+            '绝不', '从不', '毫无', '毫无意义', '别想', '休想', '毋', '毋须',
+            '无须', '无需', '何必', '何须', '岂', '岂能', '岂可', '绝非',
+            '并非', '并无', '毫无', '毫无道理', '毫无意义', '没意思', '不必要',
+            '不需要', '不应该', '不可以', '不可能', '不至于', '不至于', '不至于'
         }
-
         jieba.initialize()
 
     def segment_text_with_negation(self, text, use_pos=False):
-        """分词并标记否定词"""
+        """分词并标记否定词 - 支持多个否定词"""
         if use_pos:
             words = pseg.cut(text)
             allowed_pos = {'n', 'v', 'a', 'd', 'ad', 'i', 'l'}
@@ -32,19 +34,39 @@ class ChinesePreprocessor:
 
         # 过滤停用词，但保留否定词和情感词
         filtered_words = []
+        negation_count = 0  # 否定词计数
+
         for word, pos in words:
-            # 保留否定词
+            # 如果是否定词，增加计数并标记
             if word in self.negation_words:
-                filtered_words.append(('NOT', 'negation'))  # 标记为否定
-            # 保留情感白名单中的词
+                negation_count += 1
+                # 标记否定词及其数量
+                filtered_words.append((f'NOT_{negation_count}', 'negation'))
+            # 如果是情感词，处理之前的否定词
             elif word in self.emotion_whitelist:
+                # 如果有否定词，添加否定标记
+                if negation_count > 0:
+                    # 根据否定词数量决定是否反转
+                    if negation_count % 2 == 1:  # 奇数个否定词，需要反转
+                        filtered_words.append(('NEGATION_START', 'negation_marker'))
+                    else:  # 偶数个否定词，双重否定等于肯定
+                        filtered_words.append(('DOUBLE_NEGATION', 'negation_marker'))
+                    negation_count = 0  # 重置计数
                 filtered_words.append((word, pos))
             # 其他词：不在停用词列表中且长度大于0
             elif word not in self.stopwords and len(word.strip()) > 0:
+                # 如果遇到非情感词但有否定词，重置否定词计数
+                if negation_count > 0:
+                    # 对于非情感词前的否定词，我们仍然标记但数量减半
+                    filtered_words.append((f'NOT_{negation_count}', 'negation'))
+                    negation_count = 0
                 filtered_words.append((word, pos))
 
-        return filtered_words
+        # 处理文本末尾的否定词
+        if negation_count > 0:
+            filtered_words.append((f'NOT_{negation_count}', 'negation'))
 
+        return filtered_words
     def _create_emotion_whitelist(self):
         """创建情感词白名单"""
         whitelist = set()

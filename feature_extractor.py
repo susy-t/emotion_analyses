@@ -59,7 +59,10 @@ class EmotionLexicon:
         self.negation_words = {
             '不', '没', '无', '非', '未', '勿', '莫', '没有', '别', '未',
             '不要', '不用', '不必', '未能', '无法', '不会', '不可', '不能',
-            '绝不', '从不', '毫无'
+            '绝不', '从不', '毫无', '毫无意义', '别想', '休想', '毋', '毋须',
+            '无须', '无需', '何必', '何须', '岂', '岂能', '岂可', '绝非',
+            '并非', '并无', '毫无', '毫无道理', '毫无意义', '没意思', '不必要',
+            '不需要', '不应该', '不可以', '不可能', '不至于', '不至于', '不至于'
         }
 
         # 情感强度词
@@ -70,22 +73,44 @@ class EmotionLexicon:
         }
 
     def extract_emotion_features_with_negation(self, text, processed_text):
-        """考虑否定词的情感特征提取"""
+        """考虑多个否定词的情感特征提取"""
         tokens = processed_text.split()
 
         features = np.zeros(6)  # 6种情感
         current_intensity = 1.0
         negation_active = False
+        negation_count = 0
 
         for token in tokens:
+            # 处理强度词
             if token in self.intensity_words:
                 current_intensity = self.intensity_words[token]
                 continue
 
-            if token == 'NOT' or token in self.negation_words:
+            # 处理否定词标记
+            if token.startswith('NOT_'):
+                try:
+                    # 提取否定词数量
+                    count = int(token.split('_')[1])
+                    negation_count += count
+                    negation_active = (negation_count % 2 == 1)  # 奇数个否定词才反转
+                except (IndexError, ValueError):
+                    # 如果解析失败，默认当作单个否定词
+                    negation_count += 1
+                    negation_active = True
+                continue
+
+            # 处理否定标记开始
+            if token == 'NEGATION_START':
                 negation_active = True
                 continue
 
+            # 处理双重否定标记
+            if token == 'DOUBLE_NEGATION':
+                negation_active = False
+                continue
+
+            # 处理情感词
             emotion_scores = np.zeros(6)
             if token in self.anger_words:
                 emotion_scores[0] = current_intensity
@@ -100,22 +125,28 @@ class EmotionLexicon:
             elif token in self.surprise_words:
                 emotion_scores[5] = current_intensity
 
-            if negation_active and np.sum(emotion_scores) > 0:
-                reversed_scores = np.zeros(6)
-                reversed_scores[0] = emotion_scores[3]
-                reversed_scores[1] = emotion_scores[5]
-                reversed_scores[2] = emotion_scores[4]
-                reversed_scores[3] = emotion_scores[0]
-                reversed_scores[4] = emotion_scores[2]
-                reversed_scores[5] = emotion_scores[1]
+            # 如果有情感分数，处理否定逻辑
+            if np.sum(emotion_scores) > 0:
+                if negation_active:
+                    # 反转情感
+                    reversed_scores = np.zeros(6)
+                    reversed_scores[0] = emotion_scores[3]  # 愤怒 <-> 愉悦
+                    reversed_scores[1] = emotion_scores[5]  # 恐惧 <-> 惊喜
+                    reversed_scores[2] = emotion_scores[4]  # 悲伤 <-> 恶心
+                    reversed_scores[3] = emotion_scores[0]  # 愉悦 <-> 愤怒
+                    reversed_scores[4] = emotion_scores[2]  # 恶心 <-> 悲伤
+                    reversed_scores[5] = emotion_scores[1]  # 惊喜 <-> 恐惧
 
-                features += reversed_scores
-                negation_active = False
-            else:
-                features += emotion_scores
+                    features += reversed_scores
+                    # 重置否定状态
+                    negation_active = False
+                    negation_count = 0
+                else:
+                    features += emotion_scores
 
-            current_intensity = 1.0
+                current_intensity = 1.0
 
+        # 归一化
         if np.sum(features) > 0:
             features = features / np.sum(features)
 
