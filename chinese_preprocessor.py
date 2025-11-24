@@ -12,7 +12,7 @@ class ChinesePreprocessor:
         self.emotion_whitelist = self._create_emotion_whitelist()
 
         # 初始化jieba分词器
-        # 添加否定词列表
+        # 添加否定词列表 - 与feature_extractor保持同步
         self.negation_words = {
             '不', '没', '无', '非', '未', '勿', '莫', '没有', '别', '未',
             '不要', '不用', '不必', '未能', '无法', '不会', '不可', '不能',
@@ -21,7 +21,38 @@ class ChinesePreprocessor:
             '并非', '并无', '毫无', '毫无道理', '毫无意义', '没意思', '不必要',
             '不需要', '不应该', '不可以', '不可能', '不至于', '不至于', '不至于'
         }
+
+        # 添加自定义词典，确保情感词被正确切分
+        self._add_custom_dict()
         jieba.initialize()
+
+    def _add_custom_dict(self):
+        """添加自定义词典，确保情感词被正确切分"""
+        custom_words = [
+            # 愤怒相关
+            '气死', '气炸', '火大', '恼火', '愤怒', '生气', '气愤', '怒火', '发怒',
+            '暴怒', '怒斥', '狂怒', '震怒', '嗔怒', '义愤', '愤懑', '恼羞成怒',
+            '怒发冲冠', '火冒三丈', '七窍生烟', '咬牙切齿', '怒不可遏', '勃然大怒',
+            '大发雷霆', '怒目而视', '愤愤不平', '怒形于色',
+            # 恐惧相关
+            '吓死', '吓坏', '吓尿', '恐惧', '害怕', '恐怖', '惊吓', '恐慌', '畏惧',
+            '胆怯', '可怕', '吓人', '毛骨悚然', '不寒而栗', '战战兢兢', '提心吊胆',
+            '惊心动魄', '惊弓之鸟', '草木皆兵', '面如土色', '魂飞魄散',
+            # 悲伤相关
+            '伤心', '难过', '悲哀', '悲痛', '沮丧', '忧郁', '哀伤', '伤感', '忧伤',
+            '郁闷', '失落', '绝望', '心碎', '痛哭流涕', '肝肠寸断', '心如刀割',
+            # 愉悦相关
+            '开心', '高兴', '快乐', '喜悦', '欢乐', '欣喜', '愉快', '兴奋', '激动',
+            '幸福', '满足', '欣慰', '心花怒放', '兴高采烈', '喜出望外', '乐不可支',
+            # 恶心相关
+            '恶心', '厌恶', '反感', '讨厌', '作呕', '嫌弃', '憎恶', '深恶痛绝',
+            '令人作呕', '不堪入目',
+            # 惊喜相关
+            '惊喜', '惊讶', '惊奇', '吃惊', '意外', '震惊', '诧异', '喜出望外'
+        ]
+
+        for word in custom_words:
+            jieba.add_word(word, freq=1000)  # 设置高频率确保优先切分
 
     def segment_text_with_negation(self, text, use_pos=False):
         """分词并标记否定词 - 支持多个否定词"""
@@ -30,7 +61,8 @@ class ChinesePreprocessor:
             allowed_pos = {'n', 'v', 'a', 'd', 'ad', 'i', 'l'}
             words = [(word, pos) for word, pos in words if pos[0] in allowed_pos]
         else:
-            words = [(word, 'x') for word in jieba.cut(text)]  # 'x'表示未知词性
+            # 使用精确模式分词，确保情感词被正确识别
+            words = [(word, 'x') for word in jieba.cut(text, cut_all=False)]
 
         # 过滤停用词，但保留否定词和情感词
         filtered_words = []
@@ -67,22 +99,36 @@ class ChinesePreprocessor:
             filtered_words.append((f'NOT_{negation_count}', 'negation'))
 
         return filtered_words
+
     def _create_emotion_whitelist(self):
         """创建情感词白名单"""
         whitelist = set()
 
         # 愤怒相关
-        anger_words = ['怒', '愤', '气', '恼', '恨', '火', '暴躁', '生气', '愤怒', '气愤', '怒火']
+        anger_words = ['怒', '愤', '气', '恼', '恨', '火', '暴躁', '生气', '愤怒', '气愤', '怒火',
+                       '气死', '气炸', '火大', '恼火', '发怒', '暴怒', '怒斥', '狂怒', '震怒',
+                       '嗔怒', '义愤', '愤懑', '恼羞成怒', '怒发冲冠', '火冒三丈', '七窍生烟',
+                       '咬牙切齿', '怒不可遏', '勃然大怒', '大发雷霆', '怒目而视', '愤愤不平',
+                       '怒形于色']
         # 恐惧相关
-        fear_words = ['惧', '怕', '畏', '吓', '惊', '恐', '害怕', '恐怖', '恐惧', '惊吓']
+        fear_words = ['惧', '怕', '畏', '吓', '惊', '恐', '害怕', '恐怖', '恐惧', '惊吓', '恐慌',
+                      '畏惧', '胆怯', '可怕', '吓人', '毛骨悚然', '不寒而栗', '战战兢兢',
+                      '提心吊胆', '惊心动魄', '惊弓之鸟', '草木皆兵', '面如土色', '魂飞魄散',
+                      '吓死', '吓坏', '吓尿']
         # 悲伤相关
-        sadness_words = ['悲', '伤', '哀', '愁', '怨', '哭', '泪', '伤心', '悲伤', '难过']
+        sadness_words = ['悲', '伤', '哀', '愁', '怨', '哭', '泪', '伤心', '悲伤', '难过', '悲哀',
+                         '悲痛', '沮丧', '忧郁', '哀伤', '伤感', '忧伤', '郁闷', '失落', '绝望',
+                         '心碎', '痛哭流涕', '肝肠寸断', '心如刀割']
         # 愉悦相关
-        joy_words = ['喜', '乐', '欢', '笑', '欣', '悦', '开心', '高兴', '快乐', '喜欢']
+        joy_words = ['喜', '乐', '欢', '笑', '欣', '悦', '开心', '高兴', '快乐', '喜欢', '喜悦',
+                     '欢乐', '欣喜', '愉快', '兴奋', '激动', '幸福', '满足', '欣慰', '心花怒放',
+                     '兴高采烈', '喜出望外', '乐不可支']
         # 恶心相关
-        disgust_words = ['恶', '厌', '吐', '呕', '嫌', '憎', '讨厌', '厌恶', '反感', '恶心']
+        disgust_words = ['恶', '厌', '吐', '呕', '嫌', '憎', '讨厌', '厌恶', '反感', '恶心', '作呕',
+                         '嫌弃', '憎恶', '深恶痛绝', '令人作呕', '不堪入目']
         # 惊喜相关
-        surprise_words = ['惊', '讶', '奇', '异', '诧', '愕', '惊喜', '惊讶', '惊奇']
+        surprise_words = ['惊', '讶', '奇', '异', '诧', '愕', '惊喜', '惊讶', '惊奇', '吃惊', '意外',
+                          '震惊', '诧异', '喜出望外']
 
         # 合并所有情感词
         all_emotion_words = anger_words + fear_words + sadness_words + joy_words + disgust_words + surprise_words
@@ -103,10 +149,7 @@ class ChinesePreprocessor:
         # 将处理后的词连接成字符串，否定词标记为NOT
         processed_tokens = []
         for word, pos in words_with_negation:
-            if word == 'NOT':
-                processed_tokens.append('NOT')
-            else:
-                processed_tokens.append(word)
+            processed_tokens.append(word)
 
         return ' '.join(processed_tokens)
 
@@ -151,7 +194,7 @@ class ChinesePreprocessor:
         return basic_stopwords
 
     def clean_text(self, text):
-        """清理中文文本"""
+        """清理中文文本 - 保留更多情感相关标点"""
         if not isinstance(text, str):
             return ""
 
@@ -165,8 +208,8 @@ class ChinesePreprocessor:
         text = re.sub(r'[a-zA-Z]', '', text)
         # 移除多余空格和换行符
         text = re.sub(r'\s+', ' ', text)
-        # 移除标点符号（保留中文常用标点用于情感分析）
-        text = re.sub(r'[{}]'.format(punctuation), ' ', text)
+        # 移除标点符号（但保留情感相关的标点如！？）
+        text = re.sub(r'[{}]'.format(punctuation.replace('！', '').replace('？', '')), ' ', text)
         text = text.strip()
         return text
 
@@ -180,7 +223,8 @@ class ChinesePreprocessor:
             allowed_pos = {'n', 'v', 'a', 'd', 'ad', 'i', 'l'}
             words = [word for word, pos in words if pos[0] in allowed_pos]
         else:
-            words = jieba.cut(text)
+            # 使用精确模式分词
+            words = jieba.cut(text, cut_all=False)
 
         # 不过滤情感白名单中的词，其他词按正常规则过滤
         filtered_words = []

@@ -13,6 +13,7 @@ class ChineseEmotionClassifier:
         self.model_type = model_type
         self.model = None
         self.emotions = ['愤怒', '恐惧', '悲伤', '愉悦', '恶心', '惊喜']
+        self.uncertainty_threshold = 0.25  # 调整阈值
 
     def build_model(self, input_dim=None):
         """构建分类模型 - 修改为支持多标签分类"""
@@ -94,6 +95,62 @@ class ChineseEmotionClassifier:
             # 对于不支持概率预测的模型，返回二进制预测的软版本
             predictions = self.predict(X)
             return predictions.astype(float)
+
+    def predict_with_uncertainty(self, X):
+        """带不确定性检测的预测"""
+        probabilities = self.predict_proba(X)
+        predictions = self.predict(X)
+
+        # 检测不确定性
+        uncertain_indices = []
+        for i, prob_row in enumerate(probabilities):
+            max_prob = np.max(prob_row)
+            second_max_prob = np.sort(prob_row)[-2] if len(prob_row) > 1 else 0
+
+            # 调整不确定性检测的严格程度
+            if max_prob < self.uncertainty_threshold or (max_prob - second_max_prob) < 0.1:
+                uncertain_indices.append(i)
+                # 对于不确定的样本，将预测结果设为全0
+                predictions[i] = np.zeros_like(predictions[i])
+
+        return predictions, probabilities, uncertain_indices
+
+    def predict_emotion_with_confidence(self, X):
+        """带置信度的情感预测"""
+        predictions, probabilities, uncertain_indices = self.predict_with_uncertainty(X)
+
+        results = []
+        for i, (pred, prob) in enumerate(zip(predictions, probabilities)):
+            if i in uncertain_indices:
+                # 对于不确定的样本，返回均匀分布的低概率
+                uniform_prob = np.ones(6) * 0.1  # 每个情感10%的基础概率
+                results.append({
+                    'predictions': np.zeros(6, dtype=int),
+                    'probabilities': uniform_prob,
+                    'confidence': 'uncertain',  # 直接标记为不确定
+                    'primary_emotion': None
+                })
+            else:
+                primary_idx = np.argmax(prob)
+                max_prob = prob[primary_idx]
+
+                # 根据概率值确定置信度
+                if max_prob > 0.7:
+                    confidence = 'high'
+                elif max_prob > 0.5:
+                    confidence = 'medium'
+                else:
+                    confidence = 'low'
+
+                results.append({
+                    'predictions': pred,
+                    'probabilities': prob,
+                    'confidence': confidence,
+                    'primary_emotion': self.emotions[primary_idx] if max_prob > 0.5 else None
+                })
+
+        return results
+
     def evaluate(self, X_test, y_test):
         """评估模型性能"""
         y_pred = self.predict(X_test)
