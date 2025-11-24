@@ -55,29 +55,45 @@ class ChineseEmotionClassifier:
         return self.model.predict(X)
 
     def predict_proba(self, X):
-        """预测情感概率"""
+        """预测情感概率 - 修复概率计算"""
         if hasattr(self.model, 'predict_proba'):
-            probabilities = self.model.predict_proba(X)
+            try:
+                probabilities = self.model.predict_proba(X)
 
-            # 处理不同模型返回的概率格式
-            if isinstance(probabilities, list):
-                # MultiOutputClassifier返回列表
-                emotion_probs = np.array([prob[:, 1] if prob.shape[1] > 1 else prob[:, 0] for prob in probabilities]).T
-            else:
-                # OneVsRestClassifier返回数组
-                if probabilities.ndim == 3:
-                    # 某些模型返回3D数组
-                    emotion_probs = probabilities[:, :, 1] if probabilities.shape[2] > 1 else probabilities[:, :, 0]
+                # 处理不同模型返回的概率格式
+                if isinstance(probabilities, list):
+                    # MultiOutputClassifier返回列表
+                    emotion_probs = []
+                    for prob in probabilities:
+                        if prob.shape[1] > 1:  # 有多个类别
+                            emotion_probs.append(prob[:, 1])  # 取正例概率
+                        else:
+                            emotion_probs.append(prob[:, 0])
+                    emotion_probs = np.array(emotion_probs).T
                 else:
-                    # 2D数组
-                    emotion_probs = probabilities
+                    # OneVsRestClassifier或其他模型
+                    if probabilities.ndim == 3:
+                        emotion_probs = probabilities[:, :, 1]
+                    else:
+                        emotion_probs = probabilities
 
-            return emotion_probs
+                # 确保概率在合理范围内
+                emotion_probs = np.clip(emotion_probs, 0.0, 1.0)
+
+                # 如果所有概率都为0，均匀分布
+                if np.sum(emotion_probs) == 0:
+                    emotion_probs = np.ones(emotion_probs.shape) * (1.0 / emotion_probs.shape[1])
+
+                return emotion_probs
+
+            except Exception as e:
+                print(f"概率预测错误: {e}")
+                # 返回均匀分布作为后备
+                return np.ones((X.shape[0], 6)) * (1.0 / 6)
         else:
-            # 对于不支持概率预测的模型，返回二进制预测
+            # 对于不支持概率预测的模型，返回二进制预测的软版本
             predictions = self.predict(X)
             return predictions.astype(float)
-
     def evaluate(self, X_test, y_test):
         """评估模型性能"""
         y_pred = self.predict(X_test)

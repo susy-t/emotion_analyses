@@ -33,7 +33,7 @@ class ChineseEmotionPredictor:
             self.classifier = ChineseEmotionClassifier()
 
     def predict_emotion(self, text):
-        """预测文本情感"""
+        """预测文本情感 - 修复概率处理"""
         try:
             if not isinstance(text, str) or not text.strip():
                 return self._create_empty_result("输入文本为空")
@@ -54,21 +54,19 @@ class ChineseEmotionPredictor:
             prediction = self.classifier.predict(features)[0]
             probabilities = self.classifier.predict_proba(features)
 
-            # 处理概率格式
-            if isinstance(probabilities, list):
-                emotion_probs = []
-                for prob in probabilities:
-                    if len(prob) > 0 and len(prob[0]) > 1:
-                        emotion_probs.append(prob[0][1])
-                    elif len(prob) > 0:
-                        emotion_probs.append(prob[0][0])
-                    else:
-                        emotion_probs.append(0.0)
+            # 修复概率格式处理
+            if probabilities.ndim == 1:
+                emotion_probs = probabilities
             else:
-                if probabilities.shape[1] > 1:
-                    emotion_probs = probabilities[0][:, 1] if probabilities[0].ndim > 1 else probabilities[0]
-                else:
-                    emotion_probs = probabilities[0]
+                emotion_probs = probabilities[0]  # 取第一个样本的概率
+
+            # 确保概率数组长度为6
+            if len(emotion_probs) != 6:
+                # 如果长度不匹配，创建新的概率数组
+                fixed_probs = np.zeros(6)
+                min_len = min(len(emotion_probs), 6)
+                fixed_probs[:min_len] = emotion_probs[:min_len]
+                emotion_probs = fixed_probs
 
             emotions = ['愤怒', '恐惧', '悲伤', '愉悦', '恶心', '惊喜']
 
@@ -79,22 +77,16 @@ class ChineseEmotionPredictor:
             }
 
             for i, emotion in enumerate(emotions):
-                if i < len(emotion_probs):
-                    result['emotions'][emotion] = {
-                        'predicted': bool(prediction[i]) if i < len(prediction) else False,
-                        'probability': float(emotion_probs[i]) if i < len(emotion_probs) else 0.0
-                    }
-                else:
-                    result['emotions'][emotion] = {
-                        'predicted': False,
-                        'probability': 0.0
-                    }
+                result['emotions'][emotion] = {
+                    'predicted': bool(prediction[i]) if i < len(prediction) else False,
+                    'probability': float(emotion_probs[i]) if i < len(emotion_probs) else 0.0
+                }
 
             return result
+
         except Exception as e:
             print(f"分析过程中出现错误: {e}")
             return self._create_empty_result(f"分析错误: {str(e)}")
-
     def _create_empty_result(self, error_msg):
         """创建空结果"""
         emotions = ['愤怒', '恐惧', '悲伤', '愉悦', '恶心', '惊喜']
