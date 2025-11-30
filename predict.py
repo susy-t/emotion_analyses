@@ -42,16 +42,61 @@ class ChineseEmotionPredictor:
             except:
                 pass
 
+    def apply_common_expression_rules(self, text, result):
+        """应用常见表达规则"""
+        common_expressions = {
+            '无语': {'愤怒': 0.6, '恶心': 0.3, '悲伤': 0.1},
+            '绝望': {'悲伤': 0.8, '恐惧': 0.2},
+            '崩溃': {'愤怒': 0.4, '悲伤': 0.4, '恐惧': 0.2},
+            '绝了': {'惊喜': 0.6, '愉悦': 0.4},
+            '破防': {'悲伤': 0.7, '愤怒': 0.3},
+            'emo': {'悲伤': 0.8, '恐惧': 0.2},
+            'YYDS': {'愉悦': 0.9, '惊喜': 0.1},
+            '抓狂': {'愤怒': 0.8, '恐惧': 0.2},
+            '心态崩了': {'悲伤': 0.6, '愤怒': 0.4},
+            '受不了': {'愤怒': 0.5, '恶心': 0.3, '悲伤': 0.2},
+            '真棒': {'愉悦': 0.9, '惊喜': 0.1},
+            '太好了': {'愉悦': 0.9},
+            '完美': {'愉悦': 0.8, '惊喜': 0.2},
+        }
+
+        for expr, emotion_weights in common_expressions.items():
+            if expr in text:
+                # 根据规则调整概率
+                for emotion, weight in emotion_weights.items():
+                    if emotion in result['emotions']:
+                        result['emotions'][emotion]['probability'] = max(
+                            result['emotions'][emotion]['probability'],
+                            weight * 0.8 + result['emotions'][emotion]['probability'] * 0.2
+                        )
+                        # 如果调整后的概率足够高，标记为预测
+                        if result['emotions'][emotion]['probability'] > 0.3:
+                            result['emotions'][emotion]['predicted'] = True
+
+                # 更新主要情感
+                max_prob = 0
+                primary_emotion = None
+                for emotion, info in result['emotions'].items():
+                    if info['probability'] > max_prob:
+                        max_prob = info['probability']
+                        primary_emotion = emotion
+
+                if primary_emotion and max_prob > 0.3:
+                    result['primary_emotion'] = primary_emotion
+                    result['confidence'] = 'expression_rule'
+
+        return result
+
     def hybrid_predict(self, text):
-        """混合预测：结合模型预测和规则分析"""
+        """混合预测：结合模型预测、规则分析和标点分析"""
         # 首先尝试模型预测
         model_result = self.predict_emotion(text)
 
         # 检查是否有明确的情感预测
         has_clear_prediction = any(info['predicted'] for info in model_result['emotions'].values())
 
-        # 如果模型没有明确预测或置信度低，尝试规则分析
-        if not has_clear_prediction or model_result.get('confidence') in ['low', 'unknown']:
+        # 如果模型没有明确预测或置信度低，尝试规则和标点分析
+        if not has_clear_prediction or model_result.get('confidence') in ['low', 'unknown', 'uncertain']:
 
             rule_results = self.feature_extractor.rule_based_analysis([text])
             rule_result = rule_results[0]
@@ -69,12 +114,45 @@ class ChineseEmotionPredictor:
                 model_result['confidence'] = 'rule_based'
                 model_result['primary_emotion'] = rule_result['emotion']
             else:
-                # 规则分析也无法判断
-                model_result['confidence'] = 'uncertain'
-                model_result['primary_emotion'] = None
-                # 将所有情感标记为未预测
-                for emotion in model_result['emotions']:
-                    model_result['emotions'][emotion]['predicted'] = False
+                # 规则分析也无法判断，尝试标点分析
+                punctuation_results = self.feature_extractor.extract_punctuation_analysis([text])
+                punctuation_result = punctuation_results[0]
+
+                if punctuation_result['primary_emotion'] is not None:
+                    # 使用标点分析结果
+                    emotions = ['愤怒', '恐惧', '悲伤', '愉悦', '恶心', '惊喜']
+                    emotion_idx = emotions.index(punctuation_result['primary_emotion'])
+
+                    # 基于标点特征更新概率
+                    punctuation_features = punctuation_result['punctuation_features']
+                    total_punctuation_score = np.sum(punctuation_features)
+
+                    if total_punctuation_score > 0:
+                        for i, emotion in enumerate(emotions):
+                            model_result['emotions'][emotion]['probability'] = (
+                                    model_result['emotions'][emotion]['probability'] * 0.5 +
+                                    punctuation_features[i] * 0.5
+                            )
+                            model_result['emotions'][emotion]['predicted'] = (i == emotion_idx)
+
+                    model_result['confidence'] = 'punctuation_based'
+                    model_result['primary_emotion'] = punctuation_result['primary_emotion']
+                    model_result['punctuation_analysis'] = {
+                        'exclamation_count': punctuation_result['exclamation_count'],
+                        'question_count': punctuation_result['question_count'],
+                        'ellipsis_count': punctuation_result['ellipsis_count']
+                    }
+                else:
+                    # 所有方法都无法判断，尝试常见表达规则
+                    model_result = self.apply_common_expression_rules(text, model_result)
+
+                    # 如果仍然无法判断，标记为不确定
+                    if not any(info['predicted'] for info in model_result['emotions'].values()):
+                        model_result['confidence'] = 'uncertain'
+                        model_result['primary_emotion'] = None
+                        # 将所有情感标记为未预测
+                        for emotion in model_result['emotions']:
+                            model_result['emotions'][emotion]['predicted'] = False
 
         return model_result
 
@@ -214,6 +292,13 @@ class ChineseEmotionPredictor:
         print(f"原文: {result['text']}")
         print(f"处理后: {result['processed_text']}")
 
+        # 显示标点分析信息（如果有）
+        if 'punctuation_analysis' in result:
+            punct_info = result['punctuation_analysis']
+            print(f"标点分析: 感叹号×{punct_info['exclamation_count']} "
+                  f"问号×{punct_info['question_count']} "
+                  f"省略号×{punct_info['ellipsis_count']}")
+
         # 显示置信度
         confidence = result.get('confidence', 'unknown')
         confidence_text = {
@@ -221,6 +306,8 @@ class ChineseEmotionPredictor:
             'medium': '中等置信度',
             'low': '低置信度',
             'rule_based': '规则分析',
+            'punctuation_based': '标点分析',
+            'expression_rule': '表达规则',
             'uncertain': '无法判断',
             'unknown': '未知置信度'
         }.get(confidence, '未知置信度')
@@ -264,6 +351,12 @@ class ChineseEmotionPredictor:
             elif confidence == 'rule_based':
                 status = "R"
                 print(f"{emotion:5} [{status}] 置信度: {prob_percent:5.1f}% (规则)")
+            elif confidence == 'punctuation_based':
+                status = "P"
+                print(f"{emotion:5} [{status}] 置信度: {prob_percent:5.1f}% (标点)")
+            elif confidence == 'expression_rule':
+                status = "E"
+                print(f"{emotion:5} [{status}] 置信度: {prob_percent:5.1f}% (表达)")
             else:
                 print(f"{emotion:5} [{status}] 置信度: {prob_percent:5.1f}%")
 
@@ -284,6 +377,20 @@ class ChineseEmotionPredictor:
                 print(f"\n基于规则分析的情感: {', '.join(main_emotions)}")
             else:
                 print("\n无明显情感倾向")
+        elif confidence == 'punctuation_based':
+            main_emotions = [emotion for emotion, info in result['emotions'].items()
+                             if info['predicted']]
+            if main_emotions:
+                print(f"\n基于标点分析的情感: {', '.join(main_emotions)}")
+            else:
+                print("\n无明显情感倾向")
+        elif confidence == 'expression_rule':
+            main_emotions = [emotion for emotion, info in result['emotions'].items()
+                             if info['predicted']]
+            if main_emotions:
+                print(f"\n基于表达规则的情感: {', '.join(main_emotions)}")
+            else:
+                print("\n无明显情感倾向")
         else:
             main_emotions = [emotion for emotion, info in result['emotions'].items()
                              if info['predicted']]
@@ -295,13 +402,18 @@ class ChineseEmotionPredictor:
         if sorted_emotions:
             top_emotion, top_info = sorted_emotions[0]
             top_prob = top_info['probability'] * 100
-            if confidence in ['high', 'medium', 'rule_based'] and top_info['predicted']:
+            if confidence in ['high', 'medium', 'rule_based', 'punctuation_based', 'expression_rule'] and top_info[
+                'predicted']:
                 if confidence == 'high':
                     confidence_level = "高度可能"
                 elif confidence == 'medium':
                     confidence_level = "可能"
-                else:
+                elif confidence == 'rule_based':
                     confidence_level = "基于规则"
+                elif confidence == 'punctuation_based':
+                    confidence_level = "基于标点"
+                else:
+                    confidence_level = "基于表达规则"
                 print(f"最强烈情感: {top_emotion} ({top_prob:.1f}%) - {confidence_level}")
 
 
@@ -332,7 +444,21 @@ if __name__ == "__main__":
         "老板今天又骂我了",
         "收到礼物太开心了",
         "今天天气不错",  # 中性文本，应该无法判断
-        "我吃饭了"  # 中性文本，应该无法判断
+        "我吃饭了",  # 中性文本，应该无法判断
+        "我太生气了！！！",  # 测试标点符号
+        "这是什么？？？",  # 测试标点符号
+        "唉。。。算了。。。",  # 测试标点符号
+        "太好了！",  # 测试标点符号
+        # 测试新增词汇和规则
+        "我无语了",  # 常见表达
+        "彻底绝望了",  # 常见表达
+        "心态崩了",  # 常见表达
+        "这个设计绝了",  # 常见表达
+        "今天超级开心",  # 强度词优化
+        "有点小难过",  # 强度词优化
+        "抓狂了",  # 新增词汇
+        "YYDS！",  # 网络用语
+        "破防了",  # 网络用语
     ]
 
     print("中文情感分析演示:")

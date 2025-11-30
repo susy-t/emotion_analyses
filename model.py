@@ -13,7 +13,8 @@ class ChineseEmotionClassifier:
         self.model_type = model_type
         self.model = None
         self.emotions = ['愤怒', '恐惧', '悲伤', '愉悦', '恶心', '惊喜']
-        self.uncertainty_threshold = 0.25  # 调整阈值
+        # 降低不确定性阈值，让更多样本被判断
+        self.uncertainty_threshold = 0.15  # 从0.25降低到0.15
 
     def build_model(self, input_dim=None):
         """构建分类模型 - 修改为支持多标签分类"""
@@ -134,10 +135,10 @@ class ChineseEmotionClassifier:
                 primary_idx = np.argmax(prob)
                 max_prob = prob[primary_idx]
 
-                # 根据概率值确定置信度
-                if max_prob > 0.7:
+                # 降低判断标准，让更多样本被识别
+                if max_prob > 0.4:  # 从0.7降低到0.4
                     confidence = 'high'
-                elif max_prob > 0.5:
+                elif max_prob > 0.25:  # 从0.5降低到0.25
                     confidence = 'medium'
                 else:
                     confidence = 'low'
@@ -146,7 +147,7 @@ class ChineseEmotionClassifier:
                     'predictions': pred,
                     'probabilities': prob,
                     'confidence': confidence,
-                    'primary_emotion': self.emotions[primary_idx] if max_prob > 0.5 else None
+                    'primary_emotion': self.emotions[primary_idx] if max_prob > 0.25 else None  # 降低阈值
                 })
 
         return results

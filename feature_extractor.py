@@ -16,7 +16,13 @@ class EmotionLexicon:
             "怒骂", "怒视", "怒容", "怒意", "怒焰", "怒潮", "怒涛", "怒号", "怒叱",
             "暴躁", "生气", "发火", "光火", "动怒", "激怒", "触怒", "迁怒", "泄愤",
             "气死", "气炸", "火大", "恼火", "发怒", "暴怒", "怒斥", "狂怒", "震怒",
-            "愤怒", "发飙", "暴跳如雷", "怒不可遏", "义愤填膺", "怒目圆睁", "怒发冲冠"
+            "愤怒", "发飙", "暴跳如雷", "怒不可遏", "义愤填膺", "怒目圆睁", "怒发冲冠",
+            # 扩展愤怒词汇
+            "暴躁", "恼羞成怒", "火冒三丈", "暴跳如雷", "怒不可遏", "义愤填膺",
+            "气冲冲", "怒冲冲", "愤愤不平", "怒气冲天", "怒目而视", "怒发冲冠",
+            "大发雷霆", "怒火中烧", "愤慨", "愤恨", "愤懑", "愤然", "激愤",
+            "抓狂", "崩溃", "炸毛", "上头", "血压升高", "气不打一处来",
+            "火冒三丈", "七窍生烟", "咬牙切齿", "怒发冲冠", "勃然大怒"
         }
 
         self.fear_words = {
@@ -29,7 +35,12 @@ class EmotionLexicon:
             "慌乱", "冷汗", "浸湿", "模糊不清", "无形", "攥住", "跳动", "冲破", "哨声",
             "尖锐", "哆嗦", "秒针", "空白", "杂乱无章", "血腥味", "哽咽", "考砸", "慌乱",
             "紧张", "不安", "焦虑", "担心", "惶恐", "害怕", "恐惧", "惊慌", "惊恐",
-            "吓死", "吓坏", "吓尿", "胆战", "心惊", "害怕", "恐惧", "恐慌", "惊恐"
+            "吓死", "吓坏", "吓尿", "胆战", "心惊", "害怕", "恐惧", "恐慌", "惊恐",
+            # 扩展恐惧词汇
+            "胆战心惊", "心惊肉跳", "毛骨悚然", "不寒而栗", "战战兢兢", "提心吊胆",
+            "惶恐不安", "惴惴不安", "惊魂未定", "魂飞魄散", "闻风丧胆", "望而生畏",
+            "畏首畏尾", "惊恐万状", "惊慌失措", "六神无主", "心有余悸", "瑟瑟发抖",
+            "慌得一批", "吓尿了", "腿软", "心慌", "胆怯", "畏缩", "惊恐", "惧怕"
         }
 
         self.sadness_words = {
@@ -40,7 +51,12 @@ class EmotionLexicon:
             "心如刀割", "泪如雨下", "痛哭流涕", "悲从中来", "悲愤交加", "悲天悯人",
             "悲歌", "悲壮", "悲惨", "悲凉", "悲苦", "悲戚", "悲郁", "悲鸣", "忧伤",
             "忧郁", "郁闷", "沮丧", "失落", "绝望", "心碎", "痛苦", "难受", "伤心",
-            "难过", "悲哀", "哀伤", "忧伤", "忧郁", "郁闷", "沮丧", "悲伤"
+            "难过", "悲哀", "哀伤", "忧伤", "忧郁", "郁闷", "沮丧", "悲伤",
+            # 扩展悲伤词汇
+            "伤心欲绝", "肝肠寸断", "心如刀割", "泪如雨下", "痛哭流涕", "悲痛欲绝",
+            "悲伤成河", "泪流满面", "心如死灰", "万念俱灰", "痛不欲生", "哀莫大于心死",
+            "抑郁", "低落", "消沉", "颓废", "绝望", "无助", "凄凉", "心酸", "苦涩",
+            "emo", "破防", "泪崩", "心塞", "扎心", "难受想哭", "心里不是滋味"
         }
 
         self.joy_words = {
@@ -53,7 +69,12 @@ class EmotionLexicon:
             "喜笑颜开", "喜气洋洋", "喜不自胜", "喜极而泣", "激动", "兴奋", "激动不已",
             "激昂", "一等奖", "聚光灯", "雷鸣", "掌声", "激动", "通红", "挥舞", "校徽",
             "扬起", "笑意", "颤抖", "璀璨", "星光", "欢呼", "庆祝", "胜利", "成就",
-            "开心", "高兴", "快乐", "喜悦", "欢乐", "欣喜", "愉快", "兴奋", "幸福"
+            "开心", "高兴", "快乐", "喜悦", "欢乐", "欣喜", "愉快", "兴奋", "幸福",
+            # 扩展愉悦词汇
+            "心花怒放", "兴高采烈", "喜出望外", "乐不可支", "欢天喜地", "喜气洋洋",
+            "喜上眉梢", "喜笑颜开", "欢欣鼓舞", "欣喜若狂", "笑逐颜开", "满面春风",
+            "心满意足", "称心如意", "如愿以偿", "美滋滋", "乐呵呵", "笑嘻嘻", "哈哈笑",
+            "YYDS", "绝绝子", "太棒了", "太好了", "完美", "优秀", "点赞", "打call"
         }
 
         self.disgust_words = {
@@ -61,7 +82,12 @@ class EmotionLexicon:
             "作呕", "反胃", "吐", "不适", "难受", "不舒服", "鄙弃", "唾弃", "蔑视", "轻视",
             "鄙视", "鄙夷", "不屑", "厌烦", "厌倦", "厌弃", "厌世", "厌食", "厌氧", "厌战",
             "厌学", "厌工", "厌俗", "厌旧", "厌烦不已", "厌恶至极", "恶心巴拉", "令人作呕",
-            "不堪入目", "不堪入耳", "臭不可闻", "脏乱差", "污秽", "肮脏", "龌龊", "猥琐", "下流", "低俗"
+            "不堪入目", "不堪入耳", "臭不可闻", "脏乱差", "污秽", "肮脏", "龌龊", "猥琐", "下流", "低俗",
+            # 扩展恶心词汇
+            "反胃", "想吐", "受不了", "看不下去", "不忍直视", "令人发指",
+            "嫌弃", "鄙视", "蔑视", "看不起", "看不上", "不屑一顾",
+            "厌烦", "厌倦", "腻烦", "烦人", "烦死了", "真烦", "好烦",
+            "栓Q", "无语", "服了", "醉了", "麻了", "什么鬼", "搞什么"
         }
 
         self.surprise_words = {
@@ -70,7 +96,12 @@ class EmotionLexicon:
             "心花怒放", "欢欣鼓舞", "喜极而泣", "喜笑颜开", "喜气洋洋", "喜上眉梢", "喜洋洋", "喜滋滋",
             "欣然", "欣慰", "满意", "满足", "幸福感", "快乐", "高兴", "开心", "愉悦", "喜悦",
             "欢快", "欢畅", "欢腾", "欢跃", "惊喜交加", "惊喜若狂", "惊喜万分", "惊喜不已",
-            "惊喜欢悦", "惊喜连连", "惊喜不断", "惊喜时刻", "惊喜礼物", "惊喜派对"
+            "惊喜欢悦", "惊喜连连", "惊喜不断", "惊喜时刻", "惊喜礼物", "惊喜派对",
+            # 扩展惊喜词汇
+            "大吃一惊", "目瞪口呆", "瞠目结舌", "难以置信", "出乎意料", "意想不到",
+            "意外", "居然", "竟然", "岂料", "不料", "冷不防", "突然", "忽然",
+            "震惊", "震撼", "骇人听闻", "石破天惊", "惊天动地", "匪夷所思",
+            "哇塞", "天哪", "我的天", "不会吧", "真的假的", "开玩笑吧"
         }
 
         # 否定词列表
@@ -83,17 +114,47 @@ class EmotionLexicon:
             '不需要', '不应该', '不可以', '不可能', '不至于', '不至于', '不至于'
         }
 
-        # 修复强度词权重 - 确保合理
+        # 扩展强度词权重
         self.intensity_words = {
             '非常': 2.0, '特别': 2.0, '极其': 2.5, '十分': 1.8, '相当': 1.5,
             '有点': 0.5, '稍微': 0.3, '略微': 0.3, '超级': 2.2, '极度': 2.5,
             '太': 2.0, '真': 1.5, '很': 1.5, '挺': 1.2, '极': 2.5, '异常': 2.0,
             '死': 2.5, '炸': 2.5, '超': 1.8, '巨': 1.8, '特': 1.5, '蛮': 1.2,
             '好': 1.5, '超极': 2.2, '超级': 2.2, '贼': 1.8, '超级无敌': 2.5,
-            '比较': 1.2, '较为': 1.2, '颇为': 1.5, '颇为': 1.5, '格外': 1.8
+            '比较': 1.2, '较为': 1.2, '颇为': 1.5, '颇为': 1.5, '格外': 1.8,
+            # 扩展强度词
+            '抓狂': 2.8, '崩溃': 2.5, '炸裂': 2.7, '爆表': 2.6,
+            '极其': 2.3, '异常': 2.2, '超级': 2.0, '贼': 1.8,
+            '巨': 1.8, '超': 1.8, '特': 1.5, '蛮': 1.2,
+            '略微': 0.4, '稍稍': 0.4, '一丢丢': 0.3,
+            '有点': 0.5, '稍微': 0.4, '略': 0.4,
+            '超级': 2.2, '顶级': 2.3, '极致': 2.4, '无比': 2.1
         }
 
-        # 添加模式匹配规则
+        # 添加标点符号情感映射
+        self.punctuation_scores = {
+            '！': {'anger': 0.3, 'fear': 0.1, 'surprise': 0.4, 'joy': 0.2},  # 感叹号
+            '！！！': {'anger': 0.6, 'fear': 0.2, 'surprise': 0.8, 'joy': 0.3},  # 多个感叹号
+            '？？': {'surprise': 0.5, 'fear': 0.3},  # 多个问号
+            '。。。': {'sadness': 0.4, 'disgust': 0.2},  # 省略号表示无奈
+            '！！？': {'surprise': 0.6, 'fear': 0.3},  # 混合标点
+            '！？': {'surprise': 0.5, 'fear': 0.2},
+        }
+
+        # 标点强度映射
+        self.punctuation_intensity = {
+            '！': 1.0,
+            '！！': 1.5,
+            '！！！': 2.0,
+            '！！！！': 2.5,
+            '？': 0.8,
+            '？？': 1.2,
+            '？？？': 1.5,
+            '。。。': 1.0,
+            '。。。。': 1.3,
+        }
+
+        # 增强模式匹配规则
         self.pattern_rules = self._create_pattern_rules()
 
     def _create_pattern_rules(self):
@@ -108,7 +169,17 @@ class EmotionLexicon:
                 r'.*愤怒.*',
                 r'.*生气.*',
                 r'.*发火.*',
-                r'.*暴躁.*'
+                r'.*暴躁.*',
+                # 扩展愤怒模式
+                r'.*(真|太|特别|非常).*(烦人|讨厌|可恶|恼火).*',
+                r'.*我.*(受够了|忍无可忍).*',
+                r'.*(凭什么|为什么).*这样.*',
+                r'.*(太过分|太欺负).*人.*',
+                r'.*简直.*(不可理喻|无语).*',
+                r'.*气.*(死|炸).*我.*',
+                r'.*让.*(人生气|愤怒).*',
+                r'.*把我.*气.*',
+                r'.*真是.*够了.*'
             ],
             'fear': [
                 r'.*吓死.*',
@@ -119,7 +190,17 @@ class EmotionLexicon:
                 r'.*紧张.*',
                 r'.*不安.*',
                 r'.*担心.*',
-                r'.*恐慌.*'
+                r'.*恐慌.*',
+                # 扩展恐惧模式
+                r'.*吓.*(死|坏|尿).*我.*',
+                r'.*我.*(害怕|恐惧|紧张).*',
+                r'.*(不敢|害怕).*面对.*',
+                r'.*心.*(跳|慌).*',
+                r'.*(冷汗|发抖|颤抖).*',
+                r'.*太.*(恐怖|可怕).*',
+                r'.*不敢.*想象.*',
+                r'.*吓.*一跳.*',
+                r'.*心里.*发毛.*'
             ],
             'sadness': [
                 r'.*伤心.*',
@@ -131,7 +212,16 @@ class EmotionLexicon:
                 r'.*抑郁.*',
                 r'.*失落.*',
                 r'.*绝望.*',
-                r'.*悲伤.*'
+                r'.*悲伤.*',
+                # 扩展悲伤模式
+                r'.*心.*(碎|痛).*',
+                r'.*泪.*流.*',
+                r'.*哭.*出来.*',
+                r'.*难受.*想哭.*',
+                r'.*心情.*低落.*',
+                r'.*感觉.*不好.*',
+                r'.*失去.*希望.*',
+                r'.*人生.*无望.*'
             ],
             'joy': [
                 r'.*开心.*',
@@ -142,7 +232,16 @@ class EmotionLexicon:
                 r'.*兴奋.*',
                 r'.*激动.*',
                 r'.*欢笑.*',
-                r'.*庆祝.*'
+                r'.*庆祝.*',
+                # 扩展愉悦模式
+                r'.*太.*(棒|好|完美).*',
+                r'.*(喜欢|爱).*这个.*',
+                r'.*终于.*实现.*',
+                r'.*惊喜.*发现.*',
+                r'.*幸福.*满满.*',
+                r'.*心情.*大好.*',
+                r'.*开心.*到.*飞起.*',
+                r'.*笑.*出声.*'
             ],
             'disgust': [
                 r'.*恶心.*',
@@ -151,7 +250,15 @@ class EmotionLexicon:
                 r'.*反感.*',
                 r'.*嫌弃.*',
                 r'.*憎恶.*',
-                r'.*作呕.*'
+                r'.*作呕.*',
+                # 扩展恶心模式
+                r'.*真.*(恶心|讨厌).*',
+                r'.*让.*人.*反感.*',
+                r'.*看不.*下去.*',
+                r'.*受不了.*',
+                r'.*想吐.*',
+                r'.*太.*(脏|乱).*',
+                r'.*令人.*作呕.*'
             ],
             'surprise': [
                 r'.*惊喜.*',
@@ -161,10 +268,66 @@ class EmotionLexicon:
                 r'.*震惊.*',
                 r'.*诧异.*',
                 r'.*居然.*',
-                r'.*竟然.*'
+                r'.*竟然.*',
+                # 扩展惊喜模式
+                r'.*太.*意外.*',
+                r'.*没想到.*',
+                r'.*出乎.*意料.*',
+                r'.*居然.*是.*',
+                r'.*竟然.*这样.*',
+                r'.*大吃一惊.*',
+                r'.*目瞪口呆.*'
             ]
         }
         return rules
+
+    def extract_punctuation_features(self, text):
+        """提取标点符号特征"""
+        features = np.zeros(6)
+
+        # 检测连续的标点模式
+        punctuation_patterns = re.findall(r'[！？。]{2,}', text)
+
+        for pattern in punctuation_patterns:
+            if pattern in self.punctuation_scores:
+                scores = self.punctuation_scores[pattern]
+                intensity = self.punctuation_intensity.get(pattern, 1.0)
+
+                # 映射情感名称到索引
+                emotion_mapping = {
+                    'anger': 0, 'fear': 1, 'sadness': 2,
+                    'joy': 3, 'disgust': 4, 'surprise': 5
+                }
+
+                for emotion, score in scores.items():
+                    idx = emotion_mapping[emotion]
+                    features[idx] += score * intensity
+
+        # 单独检测感叹号和问号的数量
+        exclamation_count = text.count('！')
+        question_count = text.count('？')
+        ellipsis_count = len(re.findall(r'[。]{3,}', text))
+
+        # 感叹号增强愤怒、惊喜情感
+        if exclamation_count > 0:
+            intensity = min(2.0, 0.3 * exclamation_count)  # 限制最大强度
+            features[0] += 0.2 * intensity  # 愤怒
+            features[5] += 0.3 * intensity  # 惊喜
+            features[3] += 0.1 * intensity  # 愉悦
+
+        # 问号增强惊讶、恐惧情感
+        if question_count > 0:
+            intensity = min(1.5, 0.2 * question_count)
+            features[5] += 0.4 * intensity  # 惊喜
+            features[1] += 0.2 * intensity  # 恐惧
+
+        # 省略号增强悲伤、恶心情感
+        if ellipsis_count > 0:
+            intensity = min(1.5, 0.3 * ellipsis_count)
+            features[2] += 0.5 * intensity  # 悲伤
+            features[4] += 0.2 * intensity  # 恶心
+
+        return features
 
     def extract_emotion_features_with_negation(self, text, processed_text):
         """考虑多个否定词的情感特征提取"""
@@ -258,12 +421,16 @@ class EmotionLexicon:
                     current_intensity = max(1.0, current_intensity * 0.7)
                 last_was_intensity = False
 
+        # 新增：添加标点符号特征
+        punctuation_features = self.extract_punctuation_features(text)
+        features += punctuation_features * 0.8  # 给标点特征适当的权重
+
         # 应用模式匹配规则
         pattern_features = self._apply_pattern_rules(text)
         features = features + pattern_features * 0.5  # 给模式匹配规则一定的权重
 
         # 如果没有检测到情感词，返回均匀分布的低概率
-        if not has_emotion_word and np.sum(pattern_features) == 0:
+        if not has_emotion_word and np.sum(pattern_features) == 0 and np.sum(punctuation_features) < 0.3:
             return np.ones(6) * (1.0 / 6)
 
         # 归一化
@@ -343,12 +510,16 @@ class EmotionLexicon:
                     current_intensity = max(1.0, current_intensity * 0.7)
                 last_was_intensity = False
 
+        # 新增：添加标点符号特征
+        punctuation_features = self.extract_punctuation_features(text)
+        features += punctuation_features * 0.8
+
         # 应用模式匹配规则
         pattern_features = self._apply_pattern_rules(text)
         features = features + pattern_features * 0.5
 
         # 如果没有检测到情感词，返回均匀分布的低概率
-        if not has_emotion_word and np.sum(pattern_features) == 0:
+        if not has_emotion_word and np.sum(pattern_features) == 0 and np.sum(punctuation_features) < 0.3:
             return np.ones(6) * (1.0 / 6)
 
         # 应用平衡策略：如果某种情感词出现过多，适当降低其权重
@@ -476,6 +647,45 @@ class ChineseFeatureExtractor:
             lex_feat = self.emotion_lexicon.extract_emotion_features_with_negation(text, processed_text)
             features.append(lex_feat)
         return np.array(features)
+
+    def extract_punctuation_analysis(self, texts):
+        """专门的标点符号分析"""
+        results = []
+        for text in texts:
+            punctuation_features = self.emotion_lexicon.extract_punctuation_features(text)
+
+            # 分析标点模式
+            exclamation_count = text.count('！')
+            question_count = text.count('？')
+            ellipsis_count = len(re.findall(r'[。]{3,}', text))
+
+            # 判断基于标点的情感
+            primary_emotion = None
+            confidence = 'low'
+
+            if exclamation_count >= 3:
+                primary_emotion = '愤怒' if exclamation_count > 5 else '惊喜'
+                confidence = 'medium'
+            elif question_count >= 3:
+                primary_emotion = '恐惧'
+                confidence = 'medium'
+            elif ellipsis_count >= 2:
+                primary_emotion = '悲伤'
+                confidence = 'medium'
+            elif exclamation_count >= 1:
+                primary_emotion = '惊喜'
+                confidence = 'low'
+
+            results.append({
+                'primary_emotion': primary_emotion,
+                'confidence': confidence,
+                'exclamation_count': exclamation_count,
+                'question_count': question_count,
+                'ellipsis_count': ellipsis_count,
+                'punctuation_features': punctuation_features
+            })
+
+        return results
 
     def rule_based_analysis(self, texts):
         """基于规则的情感分析"""
